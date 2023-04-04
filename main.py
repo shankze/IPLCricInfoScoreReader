@@ -43,6 +43,7 @@ def get_batting_scores(soup):
     #print(score_tables)
 
     scores_list = []
+    team_scores_list = []
     for score_table in score_tables:
         rows = score_table.findChildren(['tr'])
         scores = {}
@@ -57,7 +58,19 @@ def get_batting_scores(soup):
                     player_score = columns[2].text.strip()
                 scores[name_link[0].get('title')] = player_score
         scores_list.append(scores)
-    return scores_list
+        team_scores = get_team_total_scores(score_table)
+        team_scores_list.append(team_scores)
+    return scores_list,team_scores_list
+
+def get_team_total_scores(score_table):
+    total_score_col = score_table.find("td", {
+        "class": "ds-font-bold ds-bg-fill-content-alternate ds-text-tight-m ds-min-w-max ds-text-right"})
+    runs_and_wickets = total_score_col.text.split("/")
+    overs_col = score_table.find("td", {
+        "class": "ds-font-bold ds-bg-fill-content-alternate ds-text-tight-m ds-min-w-max ds-flex ds-items-center !ds-pl-[100px]"})
+    overs = overs_col.findChildren(['span'])
+    total_overs = overs[0].text.split(" ")
+    return (runs_and_wickets[0],runs_and_wickets[1],total_overs[0])
 
 def get_bowling_scores(soup):
     bowling_tables = soup.find_all('table', class_='ds-w-full ds-table ds-table-md ds-table-auto')
@@ -81,9 +94,9 @@ def get_page_content():
     page = requests.get(page_url)
     soup = BeautifulSoup(page.content, "html.parser")
     team_names = get_team_names(soup)
-    batting_scores = get_batting_scores(soup)
+    batting_scores,team_scores = get_batting_scores(soup)
     bowling_scores = get_bowling_scores(soup)
-    return team_names,batting_scores,bowling_scores
+    return team_names,batting_scores,bowling_scores, team_scores
 
 def print_hi(name):
     # Use a breakpoint in the code line below to debug your script.
@@ -146,27 +159,28 @@ def generate_bowling_report(team_names,bowling_scores):
                 bowling_report[bowler] = bowling_scores[i][bowler]
         bowling_reports.append(bowling_report)
     return bowling_reports
-def print_batting_reports(batting_reports):
-    for report in batting_reports:
-        for batsman in report:
-            print(report[batsman])
+def print_batting_reports(batting_reports, team_scores):
+    #for report in batting_reports:
+    for i in range(0, 2):
+        for batsman in batting_reports[i]:
+            print(batting_reports[i][batsman])
 
         formatted_batsman_list = ""
         contains_at_least_one_element = False
-        for batsman in report:
+        for batsman in batting_reports[i]:
             if contains_at_least_one_element == True:
                 formatted_batsman_list = formatted_batsman_list + "," + batsman
             else:
                 formatted_batsman_list = formatted_batsman_list + batsman
                 contains_at_least_one_element = True
         print(formatted_batsman_list)
+        print('---')
+        for j in range(0,3):
+            print(team_scores[i][j])
         print("=======")
 
 def print_bowling_reports(bowling_reports):
     for report in bowling_reports:
-        for bowler in report:
-            print(report[bowler][0] + '    ' + report[bowler][1])
-
         formatted_bowler_list = ""
         contains_at_least_one_element = False
         for bowler in report:
@@ -176,6 +190,13 @@ def print_bowling_reports(bowling_reports):
                 formatted_bowler_list = formatted_bowler_list + bowler
                 contains_at_least_one_element = True
         print(formatted_bowler_list)
+        print('OVERS:')
+        for bowler in report:
+            print(report[bowler][0])
+        print('WICKETS:')
+        for bowler in report:
+            print(report[bowler][1])
+
         print("=======")
 def write_batsman_player_list_to_file(team_names,batting_reports):
     for i in range(0, 2):
@@ -209,10 +230,10 @@ def write_bowler_player_list_to_file(team_names,bowling_reports):
         f.close()
 
 if __name__ == '__main__':
-    team_names, batting_scores, bowling_scores = get_page_content()
+    team_names, batting_scores, bowling_scores,team_scores = get_page_content()
     batting_reports = generate_batting_report(team_names,batting_scores)
     bowling_reports = generate_bowling_report(team_names, bowling_scores)
-    print_batting_reports(batting_reports)
+    print_batting_reports(batting_reports, team_scores)
     print_bowling_reports(bowling_reports)
     write_batsman_player_list_to_file(team_names, batting_reports)
     write_bowler_player_list_to_file(team_names, bowling_reports)
