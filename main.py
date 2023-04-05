@@ -1,7 +1,7 @@
 import requests
 from bs4 import BeautifulSoup
 
-page_url = "https://www.espncricinfo.com/series/indian-premier-league-2023-1345038/royal-challengers-bangalore-vs-mumbai-indians-5th-match-1359479/full-scorecard"
+page_url = "https://www.espncricinfo.com/series/indian-premier-league-2023-1345038/delhi-capitals-vs-gujarat-titans-7th-match-1359481/full-scorecard"
 
 report_batting_file_name_list = {
     "Mumbai Indians": "MI_batsman_list.txt",
