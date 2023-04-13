@@ -1,7 +1,7 @@
 import requests
 from bs4 import BeautifulSoup
 
-page_url = "https://www.espncricinfo.com/series/indian-premier-league-2023-1345038/delhi-capitals-vs-gujarat-titans-7th-match-1359481/full-scorecard"
+page_url = "https://www.espncricinfo.com/series/indian-premier-league-2023-1345038/chennai-super-kings-vs-rajasthan-royals-17th-match-1359491/full-scorecard"
 
 report_batting_file_name_list = {
     "Mumbai Indians": "MI_batsman_list.txt",
@@ -70,7 +70,10 @@ def get_team_total_scores(score_table):
         "class": "ds-font-bold ds-bg-fill-content-alternate ds-text-tight-m ds-min-w-max ds-flex ds-items-center !ds-pl-[100px]"})
     overs = overs_col.findChildren(['span'])
     total_overs = overs[0].text.split(" ")
-    return (runs_and_wickets[0],runs_and_wickets[1],total_overs[0])
+    total_wickets = 10
+    if len(runs_and_wickets) > 1:
+        total_wickets = runs_and_wickets[1]
+    return (runs_and_wickets[0],total_wickets,total_overs[0])
 
 def get_bowling_scores(soup):
     bowling_tables = soup.find_all('table', class_='ds-w-full ds-table ds-table-md ds-table-auto')
@@ -162,40 +165,55 @@ def generate_bowling_report(team_names,bowling_scores):
 def print_batting_reports(batting_reports, team_scores):
     #for report in batting_reports:
     for i in range(0, 2):
-        for batsman in batting_reports[i]:
-            print(batting_reports[i][batsman])
-
         formatted_batsman_list = ""
+        batsman_names_list = []
         contains_at_least_one_element = False
         for batsman in batting_reports[i]:
+            batsman_names_list.append(batsman)
             if contains_at_least_one_element == True:
                 formatted_batsman_list = formatted_batsman_list + "," + batsman
             else:
                 formatted_batsman_list = formatted_batsman_list + batsman
                 contains_at_least_one_element = True
-        print(formatted_batsman_list)
+        for batsman_name in batsman_names_list:
+            print(batsman_name)
         print('---')
+        for batsman in batting_reports[i]:
+            print(batting_reports[i][batsman])
+
+
+        #print(formatted_batsman_list)
+        print('----')
+
         for j in range(0,3):
             print(team_scores[i][j])
+        order = "B" if i==0 else "C"
+        print(order)
         print("=======")
 
 def print_bowling_reports(bowling_reports):
     for report in bowling_reports:
         formatted_bowler_list = ""
         contains_at_least_one_element = False
+        bowler_names_list = []
         for bowler in report:
+            bowler_names_list.append(bowler)
             if contains_at_least_one_element == True:
                 formatted_bowler_list = formatted_bowler_list + "," + bowler
             else:
                 formatted_bowler_list = formatted_bowler_list + bowler
                 contains_at_least_one_element = True
-        print(formatted_bowler_list)
-        print('OVERS:')
-        for bowler in report:
-            print(report[bowler][0])
+        #print(formatted_bowler_list)
+        for bowler_name in bowler_names_list:
+            print(bowler_name)
+        print('---')
         print('WICKETS:')
         for bowler in report:
             print(report[bowler][1])
+        print('OVERS:')
+        for bowler in report:
+            print(report[bowler][0])
+
 
         print("=======")
 def write_batsman_player_list_to_file(team_names,batting_reports):
