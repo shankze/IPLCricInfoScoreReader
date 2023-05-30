@@ -1,1 +1,1 @@
-Rohit Sharma,Ishan Kishan,Cameron Green,Suryakumar Yadav,Tilak Varma,Nehal Wadhera,Tim David,Hrithik Shokeen,Arshad Khan,Tristan Stubbs,Piyush Chawla,Jofra Archer,Arjun Tendulkar,Jason Behrendorff,Riley Meredith
+Rohit Sharma,Ishan Kishan,Cameron Green,Suryakumar Yadav,Tilak Varma,Nehal Wadhera,Tim David,Hrithik Shokeen,Arshad Khan,Tristan Stubbs,Piyush Chawla,Jofra Archer,Arjun Tendulkar,Jason Behrendorff,Riley Meredith,Vishnu Vinod,Chris Jordan,Kumar Kartikeya
