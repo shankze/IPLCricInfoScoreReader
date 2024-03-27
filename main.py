@@ -1,11 +1,11 @@
 import requests
 from bs4 import BeautifulSoup
 
-page_url = "https://www.espncricinfo.com/series/indian-premier-league-2023-1345038/gujarat-titans-vs-chennai-super-kings-final-1370353/full-scorecard"
+page_url = "https://www.espncricinfo.com/series/indian-premier-league-2024-1410320/chennai-super-kings-vs-gujarat-titans-7th-match-1422125/full-scorecard"
 
 report_batting_file_name_list = {
     "Mumbai Indians": "MI_batsman_list.txt",
-    "Royal Challengers Bangalore": "RCB_batsman_list.txt",
+    "Royal Challengers Bengaluru": "RCB_batsman_list.txt",
     "Chennai Super Kings":"CSK_batsman_list.txt",
     "Gujarat Titans":"GT_batsman_list.txt",
     "Punjab Kings":"PBKS_batsman_list.txt",
@@ -17,7 +17,7 @@ report_batting_file_name_list = {
 }
 report_bowling_file_name_list = {
     "Mumbai Indians": "MI_bowling_list.txt",
-    "Royal Challengers Bangalore": "RCB_bowling_list.txt",
+    "Royal Challengers Bengaluru": "RCB_bowling_list.txt",
     "Chennai Super Kings":"CSK_bowling_list.txt",
     "Gujarat Titans":"GT_bowling_list.txt",
     "Punjab Kings":"PBKS_bowling_list.txt",
@@ -28,12 +28,22 @@ report_bowling_file_name_list = {
     "Sunrisers Hyderabad": "SRH_bowling_list.txt"
 }
 
+team_short_names = {
+    "Mumbai Indians": "MI","Royal Challengers Bengaluru": "RCB","Chennai Super Kings": "CSK","Gujarat Titans": "GT","Punjab Kings": "PBKS","Kolkata Knight Riders": "KKR","Lucknow Super Giants": "LSG","Delhi Capitals": "DC","Rajasthan Royals": "RR","Sunrisers Hyderabad": "SRH"
+}
+
 def get_team_names(soup):
     spans = soup.find_all('span', {'class': 'ds-text-title-xs ds-font-bold ds-capitalize'})
     team_names = []
     for span in spans:
         team_names.append(span.text)
     return team_names
+
+def get_location(soup):
+    match_header_text = soup.find_all('h1', class_='ds-text-title-xs ds-font-bold ds-mb-2 ds-m-1')[0].text.strip()
+    venue = match_header_text.split("at ", 1)[1].split(" ")[0]
+    return venue.rstrip(',')
+
 
 def get_batting_scores(soup):
     tables = soup.find_all('table')
@@ -64,7 +74,7 @@ def get_batting_scores(soup):
 
 def get_team_total_scores(score_table):
     total_score_col = score_table.find("td", {
-        "class": "ds-font-bold ds-bg-fill-content-alternate ds-text-tight-m ds-min-w-max ds-text-right"})
+        "class": "ds-font-bold ds-bg-fill-content-alternate ds-text-tight-m ds-min-w-max ds-text-right ds-text-typo"})
     runs_and_wickets = total_score_col.text.split("/")
     overs_col = score_table.find("td", {
         "class": "ds-font-bold ds-bg-fill-content-alternate ds-text-tight-m ds-min-w-max ds-flex ds-items-center !ds-pl-[100px]"})
@@ -99,7 +109,8 @@ def get_page_content():
     team_names = get_team_names(soup)
     batting_scores,team_scores = get_batting_scores(soup)
     bowling_scores = get_bowling_scores(soup)
-    return team_names,batting_scores,bowling_scores, team_scores
+    venue = get_location(soup)
+    return team_names,batting_scores,bowling_scores, team_scores, venue
 
 def print_hi(name):
     # Use a breakpoint in the code line below to debug your script.
@@ -162,7 +173,9 @@ def generate_bowling_report(team_names,bowling_scores):
                 bowling_report[bowler] = bowling_scores[i][bowler]
         bowling_reports.append(bowling_report)
     return bowling_reports
-def print_batting_reports(batting_reports, team_scores):
+
+
+def print_batting_reports(batting_reports, team_scores, team_names, venue):
     #for report in batting_reports:
     for i in range(0, 2):
         formatted_batsman_list = ""
@@ -178,6 +191,8 @@ def print_batting_reports(batting_reports, team_scores):
         for batsman_name in batsman_names_list:
             print(batsman_name)
         print('---')
+        print(venue)
+        print(team_short_names[team_names[0 if i ==1 else 1]])
         for batsman in batting_reports[i]:
             print(batting_reports[i][batsman])
 
@@ -248,10 +263,10 @@ def write_bowler_player_list_to_file(team_names,bowling_reports):
         f.close()
 
 if __name__ == '__main__':
-    team_names, batting_scores, bowling_scores,team_scores = get_page_content()
+    team_names, batting_scores, bowling_scores, team_scores, venue = get_page_content()
     batting_reports = generate_batting_report(team_names,batting_scores)
     bowling_reports = generate_bowling_report(team_names, bowling_scores)
-    print_batting_reports(batting_reports, team_scores)
+    print_batting_reports(batting_reports, team_scores,team_names, venue)
     print_bowling_reports(bowling_reports)
     write_batsman_player_list_to_file(team_names, batting_reports)
     write_bowler_player_list_to_file(team_names, bowling_reports)
