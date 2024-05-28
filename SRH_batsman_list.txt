@@ -1,1 +1,1 @@
-Mayank Agarwal,Abhishek Sharma,Rahul Tripathi,Aiden Markram,Heinrich Klaasen,Abdul Samad,Shahbaz Ahmed,Marco Jansen,Pat Cummins,Travis Head,Washington Sundar,Nitish Kumar Reddy,Bhuvneshwar Kumar,Jaydev Unadkat,Anmolpreet Singh,Sanvir Singh
+Mayank Agarwal,Abhishek Sharma,Rahul Tripathi,Aiden Markram,Heinrich Klaasen,Abdul Samad,Shahbaz Ahmed,Marco Jansen,Pat Cummins,Travis Head,Washington Sundar,Nitish Kumar Reddy,Bhuvneshwar Kumar,Jaydev Unadkat,Anmolpreet Singh,Sanvir Singh,Vijayakanth Viyaskanth
