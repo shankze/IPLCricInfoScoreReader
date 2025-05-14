@@ -1,7 +1,9 @@
 import requests
 from bs4 import BeautifulSoup
 
-page_url = "https://www.espncricinfo.com/series/indian-premier-league-2024-1410320/kolkata-knight-riders-vs-sunrisers-hyderabad-final-1426312/full-scorecard"
+from name_alternates import return_standard_name
+
+page_url = "https://www.cricbuzz.com/live-cricket-scorecard/115345/kkr-vs-csk-57th-match-indian-premier-league-2025"
 
 report_batting_file_name_list = {
     "Mumbai Indians": "MI_batsman_list.txt",
@@ -40,9 +42,61 @@ def get_team_names(soup):
     return team_names
 
 def get_location(soup):
-    match_header_text = soup.find_all('h1', class_='ds-text-title-xs ds-font-bold ds-mb-2 ds-m-1')[0].text.strip()
-    venue = match_header_text.split("at ", 1)[1].split(" ")[0]
-    return venue.rstrip(',')
+    try:
+        match_header_text = soup.find_all('h1', class_='ds-text-title-xs ds-font-bold ds-mb-2 ds-m-1')[0].text.strip()
+        venue = match_header_text.split("at ", 1)[1].split(" ")[0]
+        return venue.rstrip(',')
+    except:
+        print('Exception fetching location')
+        return ''
+
+def get_location_cricbuzz(soup):
+    try:
+        match_info_items = soup.find_all('div', class_='cb-mtch-info-itm')
+        #match_info_div = match_info_div
+        #match_info_lines = match_info_div.find_all('div',class_='cb-col-100')
+        for match_info_item in match_info_items:
+            if match_info_item.find('div',class_='cb-col-27').text == 'Venue':
+                return match_info_item.find('div',class_='cb-col-73').text.split(',')[1].strip()
+        return ''
+    except:
+        print('Exception fetching location')
+        return ''
+
+def get_batting_scores_cricbuzz(soup):
+    innings_list = ['innings_1','innings_2']
+    all_team_names = []
+    all_scores_list = []
+    all_team_scores_list = []
+    for innings in innings_list:
+        innings_div = soup.find('div', id=innings)
+        inner_div = innings_div.find_all('div',class_='cb-col cb-col-100 cb-ltst-wgt-hdr')
+        scoreboard_div = inner_div[0]
+        score_board_div_contents = scoreboard_div.find_all('div',class_='cb-col cb-col-100 cb-scrd-itms') #cb-col cb-col-100 cb-scrd-itms
+        scores = {}
+        for score_item in score_board_div_contents:
+            try:
+                score_line_elements = score_item.find_all('a',href=True)
+                if len(score_line_elements) > 0:
+                    batsman_name = score_line_elements[0].text.strip()
+                    if '(' in batsman_name:
+                        batsman_name = batsman_name[:batsman_name.find("(")].strip()
+                    batsman_name = return_standard_name(batsman_name)
+                    is_not_out = score_item.find('span', class_='text-gray').text.strip() == 'not out'
+                    score = score_item.find('div', class_='cb-col cb-col-8 text-right text-bold').text.strip()
+                    scores[batsman_name] = f'{score}*' if is_not_out else score
+            except:
+                pass
+        team_score_elements = scoreboard_div.find('div',class_='cb-scrd-hdr-rw')
+        team_score_spans = team_score_elements.find_all('span')
+        team_name = team_score_spans[0].text.strip()
+        all_team_names.append(team_name.split(' Innings')[0])
+        team_score = team_score_spans[1].text.strip().split('-')[0]
+        team_wickets = team_score_spans[1].text.split('-')[1].split(' ')[0]
+        team_overs = team_score_spans[1].text.split('(')[1].split(' ')[0]
+        all_team_scores_list.append((team_score, team_wickets, team_overs))
+        all_scores_list.append(scores)
+    return all_team_names, all_scores_list, all_team_scores_list
 
 
 def get_batting_scores(soup):
@@ -94,7 +148,6 @@ def get_bowling_scores(soup):
         for row in rows:
             columns = row.find_all('td')
             if len(columns) > 4:
-                col_0 = columns[0]
                 bowler_name = columns[0].text
                 overs_bowled = columns[1].text
                 wickets = columns[4].text
@@ -102,14 +155,40 @@ def get_bowling_scores(soup):
         bowling_scores_list.append(bowling_scores)
     return bowling_scores_list
 
+def get_bowling_scores_cricbuzz(soup):
+    innings_list = ['innings_1', 'innings_2']
+    all_bowling_scores_list = []
+    for innings in innings_list:
+        bowling_scores = {}
+        innings_div = soup.find('div', id=innings)
+        inner_div = innings_div.find_all('div',class_='cb-col cb-col-100 cb-ltst-wgt-hdr')
+        scoreboard_div = inner_div[1]
+        bowling_div_contents = scoreboard_div.find_all('div', class_='cb-col cb-col-100 cb-scrd-itms')
+        for bowl_item in bowling_div_contents:
+            bowling_line_elemets = bowl_item.find_all('a', href=True)
+            if len(bowling_line_elemets) > 0:
+                bowler_name = bowling_line_elemets[0].text.strip()
+                if '(' in bowler_name:
+                    bowler_name = bowler_name.split('(')[0].strip()
+                bowler_name = return_standard_name(bowler_name)
+                overs_bowled = bowl_item.find_all('div', class_='cb-col-8')[0].text.strip()
+                wickets = bowl_item.find_all('div', class_='cb-col-8')[2].text.strip()
+                bowling_scores[bowler_name] = (overs_bowled, wickets)
+        all_bowling_scores_list.append(bowling_scores)
+    return all_bowling_scores_list
 
 def get_page_content():
-    page = requests.get(page_url)
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+    }
+    page = requests.get(page_url, headers=headers)
     soup = BeautifulSoup(page.content, "html.parser")
     team_names = get_team_names(soup)
-    batting_scores,team_scores = get_batting_scores(soup)
-    bowling_scores = get_bowling_scores(soup)
-    venue = get_location(soup)
+    #batting_scores,team_scores = get_batting_scores(soup)
+    team_names, batting_scores,team_scores = get_batting_scores_cricbuzz(soup)
+    #bowling_scores = get_bowling_scores(soup)
+    bowling_scores = get_bowling_scores_cricbuzz(soup)
+    venue = get_location_cricbuzz(soup)
     return team_names,batting_scores,bowling_scores, team_scores, venue
 
 def print_hi(name):
@@ -188,6 +267,8 @@ def print_batting_reports(batting_reports, team_scores, team_names, venue):
             else:
                 formatted_batsman_list = formatted_batsman_list + batsman
                 contains_at_least_one_element = True
+        print(f'{team_names[i]} batting')
+        print('---')
         for batsman_name in batsman_names_list:
             print(batsman_name)
         print('---')
@@ -206,7 +287,8 @@ def print_batting_reports(batting_reports, team_scores, team_names, venue):
         print(order)
         print("=======")
 
-def print_bowling_reports(bowling_reports):
+def print_bowling_reports(bowling_reports, team_names):
+    team_name_index = 1
     for report in bowling_reports:
         formatted_bowler_list = ""
         contains_at_least_one_element = False
@@ -219,6 +301,8 @@ def print_bowling_reports(bowling_reports):
                 formatted_bowler_list = formatted_bowler_list + bowler
                 contains_at_least_one_element = True
         #print(formatted_bowler_list)
+        print(f'{team_names[team_name_index]} bowling')
+        print('---')
         for bowler_name in bowler_names_list:
             print(bowler_name)
         print('---')
@@ -228,9 +312,9 @@ def print_bowling_reports(bowling_reports):
         print('OVERS:')
         for bowler in report:
             print(report[bowler][0])
-
-
         print("=======")
+        team_name_index -= 1
+
 def write_batsman_player_list_to_file(team_names,batting_reports):
     for i in range(0, 2):
         file_name = report_batting_file_name_list[team_names[i]]
@@ -267,7 +351,7 @@ if __name__ == '__main__':
     batting_reports = generate_batting_report(team_names,batting_scores)
     bowling_reports = generate_bowling_report(team_names, bowling_scores)
     print_batting_reports(batting_reports, team_scores,team_names, venue)
-    print_bowling_reports(bowling_reports)
+    print_bowling_reports(bowling_reports,team_names)
     write_batsman_player_list_to_file(team_names, batting_reports)
     write_bowler_player_list_to_file(team_names, bowling_reports)
 
