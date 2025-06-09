@@ -3,7 +3,7 @@ from bs4 import BeautifulSoup
 
 from name_alternates import return_standard_name
 
-page_url = "https://www.cricbuzz.com/live-cricket-scorecard/115345/kkr-vs-csk-57th-match-indian-premier-league-2025"
+page_url = "https://www.cricbuzz.com/live-cricket-scorecard/118928/rcb-vs-pbks-final-indian-premier-league-2025"
 
 report_batting_file_name_list = {
     "Mumbai Indians": "MI_batsman_list.txt",

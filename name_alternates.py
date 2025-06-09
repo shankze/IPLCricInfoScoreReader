@@ -51,9 +51,9 @@ alternate_name_dict = {
     'Dushmantha Chameera':['Chameera'],
     'Yudhvir Singh Charak':['Yudhvir Singh'],
     'Rahmanullah Gurbaz':['Gurbaz'],
-# '':[''],
-# '':[''],
-# '':[''],
+    'Mustafizur Rahman':['Mustafizur'],
+    'Kyle Jamieson':['Jamieson'],
+    'Jonny Bairstow':['Bairstow'],
 # '':[''],
 # '':[''],
 
